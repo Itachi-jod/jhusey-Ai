@@ -10,31 +10,25 @@ app.use(bodyParser.json());
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 
-async function getModel() {
-  // Replace "your-correct-model-name" with the model name you got from listModels()
-  return genAI.getGenerativeModel({ model: "your-correct-model-name" });
-}
+// Use the available model name, for example, "models/text-bison-001"
+const model = genAI.getGenerativeModel({ model: "models/text-bison-001" });
 
 app.post("/chat", async (req, res) => {
   const prompt = req.body.message;
   if (!prompt) return res.status(400).json({ error: "Missing message" });
 
   try {
-    const model = await getModel();
-
-    // Use generateText() or generateContent() depending on model support
-    const result = await model.generateText({
+    // Use generateContent() to get text generation
+    const response = await model.generateContent({
       prompt: {
-        text: prompt
-      }
+        text: prompt,
+      },
     });
 
-    // For most models, the response text is inside `result.candidates[0].output`
-    const text = result.candidates[0].output;
-
+    const text = response.candidates[0].content;
     res.json({ response: text });
   } catch (err) {
-    console.error("Gemini error:", err.message || err);
+    console.error("Gemini error:", err.message);
     res.status(500).json({ error: "Something went wrong with Jhusey." });
   }
 });
