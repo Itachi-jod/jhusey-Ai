@@ -7,23 +7,25 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
-// Gemini setup (must use "v1beta")
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+// IMPORTANT: Pass version "v1beta" explicitly for Gemini
+const genAI = new GoogleGenerativeAI({
+  apiKey: process.env.API_KEY,
+  apiVersion: "v1beta"
+});
 
 app.post("/chat", async (req, res) => {
   const prompt = req.body.message;
   if (!prompt) return res.status(400).json({ error: "Missing message" });
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: "models/gemini-pro" // note the "models/" prefix!
-    });
+    // Use the full model name with "models/"
+    const model = genAI.getGenerativeModel({ model: "models/gemini-pro" });
 
     const result = await model.generateContent(prompt);
-    const response = result.response.text();
-    res.json({ response });
+    const responseText = result.response.text();
+    res.json({ response: responseText });
   } catch (err) {
-    console.error("Gemini error:", err.message);
+    console.error("Gemini error:", err);
     res.status(500).json({ error: "Something went wrong with Jhusey." });
   }
 });
