@@ -5,31 +5,38 @@ require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
 app.use(bodyParser.json());
 
-// IMPORTANT: Pass version "v1beta" explicitly for Gemini
-const genAI = new GoogleGenerativeAI({
-  apiKey: process.env.API_KEY,
-  apiVersion: "v1beta"
-});
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+
+async function getModel() {
+  // Replace "your-correct-model-name" with the model name you got from listModels()
+  return genAI.getGenerativeModel({ model: "your-correct-model-name" });
+}
 
 app.post("/chat", async (req, res) => {
   const prompt = req.body.message;
   if (!prompt) return res.status(400).json({ error: "Missing message" });
 
   try {
-    // Use the full model name with "models/"
-    const model = genAI.getGenerativeModel({ model: "models/gemini-pro" });
+    const model = await getModel();
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    res.json({ response: responseText });
+    // Use generateText() or generateContent() depending on model support
+    const result = await model.generateText({
+      prompt: {
+        text: prompt
+      }
+    });
+
+    // For most models, the response text is inside `result.candidates[0].output`
+    const text = result.candidates[0].output;
+
+    res.json({ response: text });
   } catch (err) {
-    console.error("Gemini error:", err);
+    console.error("Gemini error:", err.message || err);
     res.status(500).json({ error: "Something went wrong with Jhusey." });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Jhusey AI running on http://localhost:${port}`);
-});
+app.listen(port, () => console.log(`Jhusey AI running on port ${port}`));
