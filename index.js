@@ -1,50 +1,27 @@
-import express from 'express';
-import cors from 'cors';
-import { config } from 'dotenv';
-import { OpenAI } from 'openai';
-
-config();
+const express = require("express");
+const bodyParser = require("body-parser");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+require("dotenv").config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const port = process.env.PORT || 3000;
+app.use(bodyParser.json());
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-// Basic bad word filter (expand this list)
-const bannedWords = ['badword1', 'badword2', 'badword3'];
+app.post("/chat", async (req, res) => {
+  const prompt = req.body.message;
+  if (!prompt) return res.status(400).json({ error: "Missing message" });
 
-function moderate(text) {
-  const lower = text.toLowerCase();
-  return bannedWords.some(word => lower.includes(word));
-}
-
-app.post('/chat', async (req, res) => {
   try {
-    const { message } = req.body;
-    if (!message) return res.status(400).json({ error: 'No message provided' });
-
-    if (moderate(message)) {
-      return res.status(403).json({ error: 'Message contains banned words.' });
-    }
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: message }],
-      max_tokens: 500,
-    });
-
-    const reply = response.choices[0].message.content;
-    res.json({ reply });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    res.json({ response: text });
+  } catch (err) {
+    console.error("Gemini error:", err.message);
+    res.status(500).json({ error: "Something went wrong with Jhusey." });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Jhusey AI running on port ${PORT}`);
-});
+app.listen(port, () => console.log(`Jhusey AI running on port ${port}`));
