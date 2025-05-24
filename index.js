@@ -1,15 +1,14 @@
-import express from "express";
-import bodyParser from "body-parser";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import dotenv from "dotenv";
-dotenv.config();
+const express = require("express");
+const bodyParser = require("body-parser");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }); // <-- FIXED HERE
 
 app.post("/chat", async (req, res) => {
   const prompt = req.body.message;
@@ -21,7 +20,7 @@ app.post("/chat", async (req, res) => {
     res.json({ response: text });
   } catch (err) {
     console.error("Gemini error:", err.message);
-    res.status(500).json({ error: "Something went wrong with Jhusey." });
+    res.status(500).json({ error: "Jhusey is sleeping... try again later." });
   }
 });
 
