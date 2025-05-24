@@ -1,18 +1,17 @@
 {
   "name": "jhusey-ai",
   "version": "1.0.0",
-  "description": "Jhusey AI chatbot using Gemini Pro",
+  "description": "Jhusey AI project",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": ["ai", "gemini", "chatbot", "jhusey"],
   "author": "Lord Itachi",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.4.0",
-    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2"
+    "node-fetch": "^3.3.1"
   }
 }
