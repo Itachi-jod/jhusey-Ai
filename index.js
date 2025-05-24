@@ -1,27 +1,47 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-require("dotenv").config();
+import express from "express";
+import fetch from "node-fetch";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
 app.use(bodyParser.json());
 
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }); // <-- FIXED HERE
+const API_KEY = process.env.API_KEY;
+const MODEL = process.env.MODEL;
 
 app.post("/chat", async (req, res) => {
-  const prompt = req.body.message;
-  if (!prompt) return res.status(400).json({ error: "Missing message" });
+  const message = req.body.message;
+  if (!message) return res.status(400).json({ error: "Missing message" });
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: message }]
+            }
+          ]
+        })
+      }
+    );
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) return res.status(500).json({ error: "No response from Gemini." });
+
     res.json({ response: text });
   } catch (err) {
-    console.error("Gemini error:", err.message);
-    res.status(500).json({ error: "Jhusey is sleeping... try again later." });
+    console.error("Gemini API error:", err.message);
+    res.status(500).json({ error: "Something went wrong with Gemini." });
   }
 });
 
-app.listen(port, () => console.log(`Jhusey AI running on port ${port}`));
+app.listen(port, () => console.log(`Gemini bot running on port ${port}`));
