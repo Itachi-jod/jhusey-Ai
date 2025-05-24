@@ -1,11 +1,11 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-require("dotenv").config();
+import express from "express";
+import bodyParser from "body-parser";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-
 app.use(bodyParser.json());
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
@@ -16,18 +16,13 @@ app.post("/chat", async (req, res) => {
   if (!prompt) return res.status(400).json({ error: "Missing message" });
 
   try {
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }]
-    });
-
-    const response = result.response.text();
-    res.json({ response });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    res.json({ response: text });
   } catch (err) {
     console.error("Gemini error:", err.message);
     res.status(500).json({ error: "Something went wrong with Jhusey." });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Jhusey AI running on port ${port}`);
-});
+app.listen(port, () => console.log(`Jhusey AI running on port ${port}`));
